@@ -1,10 +1,11 @@
 //g++ -std=c++11 -Wall -fexceptions -g  -c main.cpp -o main.o
-//g++  -o loop_test main.o  -lpthread -latomic  
+//g++  -o loop_test main.o  -lpthread -latomic
 #include <condition_variable>
 #include <functional>
 #include <algorithm>
 #include <iostream>
 #include <cassert>
+#include <future>
 #include <thread>
 #include <chrono>
 #include <memory>
@@ -332,16 +333,23 @@ public:
 class Thread : public EventLoop
 {
 protected:
-    EventLoop*m_event_loop;
+    std::promise<void> m_promise;
     std::thread m_thread;
 public:
     Thread():EventLoop(),m_thread([&]
     {
+        m_event_mutex.lock();
+        m_promise.set_value();
+        m_event_mutex.unlock();
         run();
 
         //  std::cout << "run method return" << std::endl;
     })
     {
+        m_event_mutex.lock();
+        std::future<void> l_future = m_promise.get_future();
+        m_event_mutex.unlock();
+        l_future.wait();
         ref_counter++;
         std::cout << "thread in : " << ref_counter << std::endl;
     }
@@ -379,6 +387,7 @@ public:
         }
         else
         {
+            std::cout << "not running, normal exit" << std::endl;
             g_main_loop->post([&,a_cb]()->void
             {
 
@@ -522,7 +531,6 @@ int main()
     g_main_loop = new EventLoop();
     Thread_poll*l_thread_poll = new Thread_poll();
     l_thread_poll->check_in();
-    l_thread_poll->check_in();
     Thread*l_thread = l_thread_poll->get();
     l_thread_poll->get();
     l_thread_poll->get();
@@ -531,7 +539,7 @@ int main()
     l_thread->post([&,l_thread,l_thread_poll]()->void
     {
         std::cout << "thread hello world" << std::endl;
-        l_thread_poll->destroy(nullptr);
+        destroy_object(l_thread_poll);
     });
 
     g_main_loop->post([&]()->void
