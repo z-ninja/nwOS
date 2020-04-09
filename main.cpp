@@ -1,3 +1,5 @@
+//g++ -std=c++11 -Wall -fexceptions -g  -c main.cpp -o main.o
+//g++  -o loop_test main.o  -lpthread -latomic  
 #include <condition_variable>
 #include <functional>
 #include <algorithm>
