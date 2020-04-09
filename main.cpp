@@ -336,7 +336,7 @@ protected:
     std::promise<void> m_promise;
     std::thread m_thread;
 public:
-    Thread():EventLoop(),m_thread([&]
+    Thread():EventLoop(),m_promise(),m_thread([&]
     {
         m_event_mutex.lock();
         m_promise.set_value();
