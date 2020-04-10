@@ -616,6 +616,7 @@ public:
         m_event_mutex.lock();
         std::future<void> l_future = m_promise.get_future();
         m_event_mutex.unlock();
+        l_future.wait();
     }
     virtual void run()
     {
